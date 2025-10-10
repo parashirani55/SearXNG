@@ -50,10 +50,34 @@ Now extract and return **only** in this exact format using the content below:
 
 {text[:8000]}
 """
-
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}]
     )
+    return response.choices[0].message.content
 
+
+# -----------------------
+# New: Generate Company Description
+# -----------------------
+def generate_description(text):
+    prompt = f"""
+You are an expert business analyst.
+Based on the following web content, write a concise, factual, and professional company description suitable for a pitch deck or investor report.
+
+Include:
+- What the company does
+- Its target customers or market
+- Its value proposition
+- Key differentiators (if mentioned)
+
+Keep it under 150 words. Focus only on information available in the content.
+
+Content:
+{text[:6000]}
+"""
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
     return response.choices[0].message.content
