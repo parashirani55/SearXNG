@@ -23,6 +23,9 @@ def create_pdf_from_text(title, summary):
     pdf.set_font("DejaVu", "", 12)
     pdf.multi_cell(0, 8, summary)
 
-    # Return as BytesIO directly, no encode needed
-    pdf_bytes = pdf.output(dest="S")  # returns bytearray
-    return io.BytesIO(pdf_bytes)
+    # --- Convert to bytes if returned as str ---
+    pdf_output = pdf.output(dest="S")
+    if isinstance(pdf_output, str):
+        pdf_output = pdf_output.encode("latin-1")  # FPDF standard encoding
+
+    return io.BytesIO(pdf_output)
