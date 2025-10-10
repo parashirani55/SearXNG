@@ -4,7 +4,7 @@ import os
 
 # Local imports
 from searxng_crawler import scrape_website  # Updated with Wikipedia fallback
-from searxng_analyzer import generate_summary
+from searxng_analyzer import generate_summary, generate_description
 from searxng_db import store_report, get_reports, store_search, get_search_history
 from searxng_pdf import create_pdf_from_text  # Unicode-safe PDF
 from serpapi import GoogleSearch
@@ -102,17 +102,29 @@ if (selected_urls or search_query) and st.button("🚀 Analyze Selected URLs / G
                 if selected_urls:
                     scraped_text = scrape_website(base_url=url, company_name=search_query)
 
+                # --- AI Analysis ---
                 summary = generate_summary(scraped_text)
+                description = generate_description(scraped_text)
 
-                # Save to database
-                store_report(url, summary)
-                store_search(search_query, scraped_text, summary)
+                # --- Save to database ---
+                store_report(url, summary, description)
+                store_search(search_query, scraped_text, summary, description)
 
-                # Display summary
+                # --- Display Results ---
                 st.markdown(f"### 📌 {url}")
-                st.markdown(summary)
+                
+                
 
-                pdf_file = create_pdf_from_text(title=url, summary=summary)
+                st.subheader("📈 Valuation Summary Report")
+                st.write(summary)
+
+                st.subheader("🏢 Company Description")
+                st.write(description)
+
+                
+                # --- PDF Download ---
+                combined_text = f"Company Description:\n{description}\n\nValuation Summary:\n{summary}"
+                pdf_file = create_pdf_from_text(title=url, summary=combined_text)
                 st.download_button(
                     label="📄 Download PDF",
                     data=pdf_file,
@@ -135,11 +147,17 @@ if not reports:
 else:
     for idx, r in enumerate(reports):
         with st.expander(f"📊 {r.get('company', 'Unknown Company')}"):
-            st.markdown(r.get('summary', 'No summary available.'))
+            
+
+            st.subheader("📈 Valuation Summary Report")
+            st.write(r.get('summary', 'No summary available.'))
+
+            st.subheader("🏢 Company Description")
+            st.write(r.get('description', 'No description available.'))
 
             pdf_file = create_pdf_from_text(
                 title=r.get('company', 'Report'),
-                summary=r.get('summary', '')
+                summary=f"{r.get('description','')}\n\n{r.get('summary','')}"
             )
 
             st.download_button(
@@ -163,11 +181,12 @@ else:
         with st.expander(f"🔎 {h.get('query', 'Unknown Query')}"):
             raw_text = h.get('results', '')[:500] + "..."
             st.markdown(f"**Raw Results:**\n{raw_text}")
+            st.markdown(f"**AI Description:**\n{h.get('description', '')}")
             st.markdown(f"**AI Summary:**\n{h.get('summary', '')}")
 
             pdf_file = create_pdf_from_text(
                 title=h.get('query', 'Search'),
-                summary=h.get('summary', '')
+                summary=f"{h.get('description','')}\n\n{h.get('summary','')}"
             )
 
             st.download_button(
