@@ -69,4 +69,6 @@ urllib3==2.5.0
 websockets==15.0.1
 playwright==1.42.0
 greenlet==3.0.3
+fpdf==1.7.2
+
 
